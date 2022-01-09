@@ -1,4 +1,5 @@
 import PySimpleGUI as sg
+from PySimpleGUI.PySimpleGUI import main
 import generator
 
 """
@@ -29,27 +30,48 @@ class GUI:
     def __init__(self, config_info: dict) -> None:
         self.config_info = config_info
 
+    def get_config_info(self):
+        return self.config_info
+
     # function to call the settings_window
     def settings_window(self):
 
         # creates a new layout for each variable needed
-        def make_new_input_layout(i):
+        def generate_new_var_inputs_layout(i):
             return [[
-                sg.Text("VAR " + str(i) + ": "),
-                sg.InputText(key=("VAR", i))
+                sg.Text(f"VAR {i}:"),
+                sg.InputText(key=("VAR", i)),
+                sg.Radio("Single Line",
+                         group_id=f"Group {i}", key=f"SINGLE_LINE_{i}"),
+                sg.Radio(
+                    "Multiline", group_id=f"Group {i}", key=f"MULTILINE_{i}")
             ]]
 
         # puts all the variables into a list
-        def var_to_list(values: dict):
-            var_list = []
+        def var_to_text_type_dic(values: dict):
+            var_dic = {}
             for key in values.keys():
                 if type(key) is tuple and values[key]:
                     updated_var = values[key].replace(" ", "")
-                    var_list.append(updated_var)
-            return var_list
+                    var_num = key[1]
 
-        variable_layout = [[sg.Text("VAR 1: "),
+                    if values[f"SINGLE_LINE_{var_num}"]:
+                        text_type = "SINGLELINE"
+                    elif values[f"MULTILINE_{var_num}"]:
+                        text_type = "MULTILINE"
+                    elif not(values[f"SINGLE_LINE_{var_num}"]) and not(values[f"MULTILINE_{var_num}"]):
+                        text_type = "SINGLELINE"
+
+                    var_dic[updated_var] = text_type
+
+            return var_dic
+
+        variable_layout = [[sg.Text("VAR 0: "),
                             sg.InputText(key=("VAR", 0)),
+                            sg.Radio("Single Line", group_id="Group 1",
+                                     key=f"SINGLE_LINE_{0}"),
+                            sg.Radio("Multiline", group_id="Group 1",
+                                     key=f"MULTILINE_{0}"),
                             sg.Button("+", enable_events=True, key="PLUS")]
                            ]
 
@@ -73,22 +95,23 @@ class GUI:
                            [sg.Text("Select directory to save Cover Letter")],
                            [sg.Text("Current Directory: " +
                                     self.config_info.get("SAVE_DIR", ""))],
-                           [sg.Input("", key="SAVE_DIR"), sg.FileBrowse()],
+                           [sg.Input("", key="SAVE_DIR"), sg.FolderBrowse()],
                            [sg.Column(save_dir_layout, key="SAVE_NO_MSG"),
                            sg.Column(input_confirmed_save_layout, key="SAVE_MSG", visible=False)],
 
                            [sg.HorizontalSeparator()],
 
-                           [sg.Text("Input variable names to be replaced")],
+                           [sg.Text(
+                               "Input variable names to be replaced AND type of input box needed")],
 
                            [sg.Column(variable_layout, key="VAR_COLUMN")],
                            [sg.Submit(button_text="Update", key="SUBMIT")]
                            ]
 
         settings_window = sg.Window("Settings", layout=settings_layout)
-        sg.Folder
+
         # event loop
-        i = 2
+        i = 1
         while True:
             event, values = settings_window.read(timeout=50)
 
@@ -107,12 +130,13 @@ class GUI:
 
             if event == "PLUS":
                 settings_window.extend_layout(
-                    settings_window["VAR_COLUMN"], make_new_input_layout(i))
+                    settings_window["VAR_COLUMN"], generate_new_var_inputs_layout(i))
                 i += 1
 
             if event == "SUBMIT":
-                self.config_info["VARIABLE_LIST"] = var_to_list(values)
-                print(self.config_info)
+                print(values)
+                self.config_info["VAR_TO_TEXT_TYPE_DIC"] = var_to_text_type_dic(
+                    values)
 
         settings_window.close()
 
@@ -121,8 +145,45 @@ class GUI:
         # return self.config_info
 
     def main(self):
-        # main menu layout
 
+        def generate_var_inputs_layout():
+            var_layout = []
+
+            for var_and_type in self.config_info["VAR_TO_TEXT_TYPE_DIC"].items():
+                if var_and_type[1] == "SINGLELINE":
+                    var_layout.append([sg.Text(f"{var_and_type[0]}: "),
+                                       sg.Input(key=f"{var_and_type[0].upper()}_INPUT")])
+                else:
+                    var_layout.append([sg.Text(f"{var_and_type[0]}: ")])
+                    var_layout.append(
+                        [sg.Multiline(key=f"{var_and_type[0].upper()}_INPUT")])
+
+            return var_layout
+
+        def check_for_saved_settings():
+            main_window_layout = []
+
+            # User has not inputted necessary information
+            if not(self.config_info.get("VAR_TO_TEXT_TYPE_DIC", "")):
+                main_window_layout.append(
+                    [sg.Text("ERROR: VARIABLES NOT FOUND! PLEASE GO TO SETTINGS AND INPUT VARIABLES.")])
+            if not(self.config_info.get("SAVE_DIR", "")):
+                main_window_layout.append([sg.Text(
+                    "ERROR: NO SAVE DIRECTORY FOUND! PLEASE GO TO SETTINGS AND INPUT SAVE DIRECTORY.")])
+            if not(self.config_info.get("TEMPLATE_DIR", "")):
+                main_window_layout.append([sg.Text(
+                    "ERROR: NO TEMPLATE FOUND! PLEASE GO TO SETTINGS AND INPUT TEMPLATE DIRECTORY.")])
+
+            if main_window_layout:
+                main_window_layout.append(
+                    [sg.Text("Please relaunch the program to apply new settings!")])
+
+            if self.config_info.get("VAR_TO_TEXT_TYPE_DIC"):
+                main_window_layout.append(generate_var_inputs_layout())
+
+            return main_window_layout
+
+        # main menu layout
         menu_layout = [
             ["Tools", ["Settings"]],
             ["Help", ["About"]]
@@ -130,7 +191,7 @@ class GUI:
 
         layout = [
             [sg.Menu(menu_layout)],
-            []
+            [check_for_saved_settings()]
         ]
 
         window = sg.Window("Cover Letter Generator", layout)
