@@ -68,27 +68,21 @@ class GUI:
 
         variable_layout = [[sg.Text("VAR 0: "),
                             sg.InputText(key=("VAR", 0)),
-                            sg.Radio("Single Line", group_id="Group 1",
+                            sg.Radio("Single Line", group_id="Group 0",
                                      key=f"SINGLE_LINE_{0}"),
-                            sg.Radio("Multiline", group_id="Group 1",
+                            sg.Radio("Multiline", group_id="Group 0",
                                      key=f"MULTILINE_{0}"),
                             sg.Button("+", enable_events=True, key="PLUS")]
                            ]
-
-        input_confirmed_save_layout = [
-            [sg.Text("Input Saved!", key="INPUT_CONFIRM_MSG")]]
-        input_confirmed_template_layout = [
-            [sg.Text("Input Saved!", key="INPUT_CONFIRM_MSG")]]
-
-        template_dir_layout = [[sg.Button("Save", key="TEMPLATE_CONFIRM")]]
-        save_dir_layout = [[sg.Button("Save", key="SAVE_CONFIRM")]]
 
         settings_layout = [[sg.Text("Select .tex file template")],
                            [sg.Text("Current Template: " +
                                     self.config_info.get("TEMPLATE_DIR", ""))],
                            [sg.Input("", key="TEMPLATE_DIR"), sg.FileBrowse()],
-                           [sg.Column(template_dir_layout, key="TEMPLATE_NO_MSG"),
-                           sg.Column(input_confirmed_template_layout, key="TEMPLATE_MSG", visible=False)],
+                           [sg.Button("Save", key="TEMPLATE_CONFIRM"),
+                           sg.Text("Input Saved!",
+                                   key="TEMPLATE_MSG", visible=False)
+                            ],
 
                            [sg.HorizontalSeparator()],
 
@@ -96,8 +90,22 @@ class GUI:
                            [sg.Text("Current Directory: " +
                                     self.config_info.get("SAVE_DIR", ""))],
                            [sg.Input("", key="SAVE_DIR"), sg.FolderBrowse()],
-                           [sg.Column(save_dir_layout, key="SAVE_NO_MSG"),
-                           sg.Column(input_confirmed_save_layout, key="SAVE_MSG", visible=False)],
+                           [sg.Button("Save", key="SAVE_CONFIRM"),
+                           sg.Text("Input Saved!",
+                                   key="SAVE_MSG", visible=False)
+                            ],
+
+                           [sg.HorizontalSeparator()],
+
+                           [sg.Text("Select directory of Excel Tracking Sheet")],
+                           [sg.Text("Current Directory: " +
+                                    self.config_info.get("TRACKER_DIR", ""))],
+                           [sg.Input("", key="TRACKER_DIR"),
+                            sg.FileBrowse()],
+                           [sg.Button("Save", key="TRACKER_CONFIRM"),
+                           sg.Text("Input Saved!",
+                                   key="TRACKER_MSG", visible=False)
+                            ],
 
                            [sg.HorizontalSeparator()],
 
@@ -120,13 +128,15 @@ class GUI:
 
             if event == "TEMPLATE_CONFIRM" and values["TEMPLATE_DIR"]:
                 self.config_info["TEMPLATE_DIR"] = values["TEMPLATE_DIR"]
-                settings_window["TEMPLATE_NO_MSG"].update(visible=False)
                 settings_window["TEMPLATE_MSG"].update(visible=True)
 
             if event == "SAVE_CONFIRM" and values["SAVE_DIR"]:
                 self.config_info["SAVE_DIR"] = values["SAVE_DIR"]
-                settings_window["SAVE_NO_MSG"].update(visible=False)
                 settings_window["SAVE_MSG"].update(visible=True)
+
+            if event == "TRACKER_CONFIRM" and values["TRACKER_DIR"]:
+                self.config_info["TRACKER_DIR"] = values["TRACKER_DIR"]
+                settings_window["TRACKER_MSG"].update(visible=True)
 
             if event == "PLUS":
                 settings_window.extend_layout(
@@ -195,8 +205,6 @@ class GUI:
             return main_window_layout
 
         def var_to_input_dic(event, values):
-            if not(self.config_info.get("VAR_TO_INPUT_DIC", "")):
-                self.config_info["VAR_TO_INPUT_DIC"] = {}
 
             var = event.replace("_VAR_INPUT_CONFIRM", "")
             user_input = values[f"{var}_INPUT"]
@@ -211,7 +219,8 @@ class GUI:
 
         layout = [
             [sg.Menu(menu_layout)],
-            [check_for_saved_settings()]
+            [check_for_saved_settings()],
+            [sg.Button("Generate", key="GENERATE")]
         ]
 
         window = sg.Window("Cover Letter Generator",
@@ -219,6 +228,11 @@ class GUI:
                            resizable=True,
                            location=(400, 200),
                            grab_anywhere=True)
+
+        # creating a blank var_to_input dictionary
+        self.config_info["VAR_TO_INPUT_DIC"] = {}
+
+        cover_gen = generator.Generator(self.config_info)
 
         # event loop
         while True:
@@ -232,6 +246,8 @@ class GUI:
                 window[event.replace("VAR_INPUT_CONFIRM", "SAVED_MSG")].update(
                     visible=True)
                 var_to_input_dic(event, values)
+            if event == "GENERATE":
+                cover_gen.create()
 
             print(self.config_info)
 
