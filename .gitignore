@@ -10,6 +10,9 @@ venv.bak/
 # Python
 __pycache__/
 
+#VSCode Specific
+.vscode/
+
 # Project Specific
 Normal/
 onlineCode.py
