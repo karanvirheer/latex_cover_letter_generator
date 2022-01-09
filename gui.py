@@ -134,7 +134,6 @@ class GUI:
                 i += 1
 
             if event == "SUBMIT":
-                print(values)
                 self.config_info["VAR_TO_TEXT_TYPE_DIC"] = var_to_text_type_dic(
                     values)
 
@@ -152,11 +151,23 @@ class GUI:
             for var_and_type in self.config_info["VAR_TO_TEXT_TYPE_DIC"].items():
                 if var_and_type[1] == "SINGLELINE":
                     var_layout.append([sg.Text(f"{var_and_type[0]}: "),
-                                       sg.Input(key=f"{var_and_type[0].upper()}_INPUT")])
+                                       sg.Input(
+                                           key=f"{var_and_type[0]}_INPUT"),
+
+                                       # Save Button Functionality
+                                       sg.Button(
+                                           "Save", key=f"{var_and_type[0]}_VAR_INPUT_CONFIRM"),
+                                       sg.Text("Input Saved!", visible=False, key=f"{var_and_type[0]}_SAVED_MSG")])
+                # Multiline
                 else:
                     var_layout.append([sg.Text(f"{var_and_type[0]}: ")])
                     var_layout.append(
-                        [sg.Multiline(key=f"{var_and_type[0].upper()}_INPUT")])
+                        [[sg.Multiline(key=f"{var_and_type[0]}_INPUT")],
+
+                         # Save Button Functionality
+                         [sg.Button("Save", key=f"{var_and_type[0]}_VAR_INPUT_CONFIRM"),
+                          sg.Text("Input Saved!", visible=False, key=f"{var_and_type[0]}_SAVED_MSG")]
+                         ])
 
             return var_layout
 
@@ -183,6 +194,15 @@ class GUI:
 
             return main_window_layout
 
+        def var_to_input_dic(event, values):
+            if not(self.config_info.get("VAR_TO_INPUT_DIC", "")):
+                self.config_info["VAR_TO_INPUT_DIC"] = {}
+
+            var = event.replace("_VAR_INPUT_CONFIRM", "")
+            user_input = values[f"{var}_INPUT"]
+
+            self.config_info["VAR_TO_INPUT_DIC"].update({var: user_input})
+
         # main menu layout
         menu_layout = [
             ["Tools", ["Settings"]],
@@ -194,7 +214,11 @@ class GUI:
             [check_for_saved_settings()]
         ]
 
-        window = sg.Window("Cover Letter Generator", layout)
+        window = sg.Window("Cover Letter Generator",
+                           layout,
+                           resizable=True,
+                           location=(400, 200),
+                           grab_anywhere=True)
 
         # event loop
         while True:
@@ -203,9 +227,12 @@ class GUI:
                 break
             if event in ("Settings"):
                 print("---------------SETTINGS MENU-----------------")
-                # self.config_info.update(self.settings_window())
                 self.settings_window()
+            if "VAR_INPUT_CONFIRM" in event:
+                window[event.replace("VAR_INPUT_CONFIRM", "SAVED_MSG")].update(
+                    visible=True)
+                var_to_input_dic(event, values)
 
-        print(self.config_info)
+            print(self.config_info)
 
         window.close()
