@@ -217,22 +217,16 @@ class GUI:
                 if var_and_type[1] == "SINGLELINE":
                     var_layout.append([sg.Text(f"{var_and_type[0]}: "),
                                        sg.Input(
-                                           key=f"{var_and_type[0]}_INPUT"),
-
-                                       # Save Button Functionality
-                                       sg.Button(
-                                           "Save", key=f"{var_and_type[0]}_VAR_INPUT_CONFIRM"),
-                                       sg.Text("Input Saved!", visible=False, key=f"{var_and_type[0]}_SAVED_MSG")])
+                                           key=f"{var_and_type[0]}_INPUT")])
                 # Multiline
                 else:
                     var_layout.append([sg.Text(f"{var_and_type[0]}: ")])
                     var_layout.append(
-                        [[sg.Multiline(key=f"{var_and_type[0]}_INPUT")],
+                        [sg.Multiline(key=f"{var_and_type[0]}_INPUT")])
 
-                         # Save Button Functionality
-                         [sg.Button("Save", key=f"{var_and_type[0]}_VAR_INPUT_CONFIRM"),
-                          sg.Text("Input Saved!", visible=False, key=f"{var_and_type[0]}_SAVED_MSG")]
-                         ])
+            var_layout.append(
+                [sg.Button("Save All", key="INPUT_CONFIRM"),
+                 sg.Text("Input Saved!", key="INPUT_CONFIRM_MSG", visible=False)])
 
             return var_layout
 
@@ -259,12 +253,10 @@ class GUI:
 
             return main_window_layout
 
-        def var_to_input_dic(event, values):
-
-            var = event.replace("_VAR_INPUT_CONFIRM", "")
-            user_input = values[f"{var}_INPUT"]
-
-            self.config_info["VAR_TO_INPUT_DIC"].update({var: user_input})
+        def var_to_input_dic(values):
+            for var in self.config_info["VAR_TO_TEXT_TYPE_DIC"].keys():
+                user_input = values[f"{var}_INPUT"]
+                self.config_info["VAR_TO_INPUT_DIC"].update({var: user_input})
 
         def header_to_input_dic():
             var_to_input_dic = self.config_info["VAR_TO_INPUT_DIC"]
@@ -310,10 +302,9 @@ class GUI:
             if event in ("Settings"):
                 print("---------------SETTINGS MENU-----------------")
                 self.settings_window()
-            if "VAR_INPUT_CONFIRM" in event:
-                window[event.replace("VAR_INPUT_CONFIRM", "SAVED_MSG")].update(
-                    visible=True)
-                var_to_input_dic(event, values)
+            if event == "INPUT_CONFIRM":
+                window["INPUT_CONFIRM_MSG"].update(visible=True)
+                var_to_input_dic(values)
             if event == "GENERATE":
                 gen.create()
                 header_to_input_dic()
