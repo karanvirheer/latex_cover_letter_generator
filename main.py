@@ -1,5 +1,6 @@
 import mpu
 from os.path import exists
+from generator import Generator
 import gui
 
 
@@ -44,6 +45,8 @@ def save_settings(new_config_info):
 if __name__ == "__main__":
     config_info = load_settings()
 
+    gen = Generator(config_info)
+    gen.read_excel_sheet()
     # methods
     gui = gui.GUI(config_info)
     gui.main()
