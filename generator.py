@@ -25,13 +25,20 @@ class Generator:
         self.save_dir = config_info["SAVE_DIR"]
         self.tracker_dir = config_info["TRACKER_DIR"]
 
+        self.excel_dataframe = pd.read_excel(self.tracker_dir)
+
     def read_excel_sheet(self):
         header_dic = {}
-        excel_dataframe = pd.read_excel(self.tracker_dir)
-        for header in excel_dataframe.columns:
+        for header in self.excel_dataframe.columns:
             if "Unnamed" not in header:
                 header_dic[header] = ""
         return header_dic
+
+    def write_to_excel_sheet(self):
+        self.excel_dataframe = self.excel_dataframe.append(
+            self.config_info["HEADER_TO_INPUT_DIC"], ignore_index=True)
+
+        self.excel_dataframe.to_excel(self.tracker_dir, index=False)
 
     def create(self):
         print("\n============ CREATING PDF FILE ============\n")
