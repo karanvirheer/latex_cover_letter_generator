@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 from PySimpleGUI.PySimpleGUI import main
 import generator
+import datetime
 
 """
 TODO
@@ -22,6 +23,17 @@ TODO
 
     - create a preview pane for the generated PDF
         o this pane will showcase a live preview of the changes being made
+
+-------------------------------
+Dec 09
+-------------
+
+o live pdf preview
+    - fix the png not showing up issue
+
+o figure out how to make the excel tracking work
+o make option to save to common use directory
+    - ex. Karanvir_Heer_Cover_Letter.pdf
     """
 
 
@@ -66,6 +78,28 @@ class GUI:
 
             return var_dic
 
+        def create_excel_tracker_input_layout():
+            gen = generator.Generator(self.config_info)
+            header_dic = gen.read_excel_sheet()
+            excel_header_layout = []
+            date = datetime.datetime.now()
+
+            i = 0
+            for header in header_dic.keys():
+                if "date" in header.lower():
+                    excel_header_layout.append(
+                        [sg.Text(f"{header}: ", key=f"TEXT_{i}"),
+                         sg.Input(f"{date.date()}", key=f"HEADER_{i}")])
+                else:
+                    excel_header_layout.append(
+                        [sg.Text(f"{header}: ", key=f"TEXT_{i}"),
+                         sg.Input("", key=f"HEADER_{i}")])
+                i += 1
+
+            excel_header_layout.append(
+                [sg.Button("Save All", key="SAVE_HEADER_MAPPING")])
+            return excel_header_layout
+
         variable_layout = [[sg.Text("VAR 0: "),
                             sg.InputText(key=("VAR", 0)),
                             sg.Radio("Single Line", group_id="Group 0",
@@ -106,6 +140,10 @@ class GUI:
                            sg.Text("Input Saved!",
                                    key="TRACKER_MSG", visible=False)
                             ],
+
+                           [sg.HorizontalSeparator()],
+
+                           [sg.Column(create_excel_tracker_input_layout())],
 
                            [sg.HorizontalSeparator()],
 
