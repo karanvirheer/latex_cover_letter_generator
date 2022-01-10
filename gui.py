@@ -97,8 +97,20 @@ class GUI:
                 i += 1
 
             excel_header_layout.append(
-                [sg.Button("Save All", key="SAVE_HEADER_MAPPING")])
+                [sg.Button("Save All", key="SAVE_HEADER_MAPPING"),
+                 sg.Text("Input Saved!", key="SAVE_HEADER_MSG", visible=False)])
+
             return excel_header_layout
+
+        def header_to_var_dic(values):
+            gen = generator.Generator(self.config_info)
+            header_dic = gen.read_excel_sheet()
+            i = 0
+            for keys in header_dic.keys():
+                header_dic[keys] = values[f"HEADER_{i}"]
+                i += 1
+
+            return header_dic
 
         variable_layout = [[sg.Text("VAR 0: "),
                             sg.InputText(key=("VAR", 0)),
@@ -176,6 +188,11 @@ class GUI:
                 self.config_info["TRACKER_DIR"] = values["TRACKER_DIR"]
                 settings_window["TRACKER_MSG"].update(visible=True)
 
+            if event == "SAVE_HEADER_MAPPING":
+                self.config_info["HEADER_TO_VAR_DIC"] = header_to_var_dic(
+                    values)
+                settings_window["SAVE_HEADER_MSG"].update(visible=True)
+
             if event == "PLUS":
                 settings_window.extend_layout(
                     settings_window["VAR_COLUMN"], generate_new_var_inputs_layout(i))
@@ -249,6 +266,19 @@ class GUI:
 
             self.config_info["VAR_TO_INPUT_DIC"].update({var: user_input})
 
+        def header_to_input_dic():
+            var_to_input_dic = self.config_info["VAR_TO_INPUT_DIC"]
+            header_to_var_dic = self.config_info["HEADER_TO_VAR_DIC"]
+            header_to_input_dic = {}
+
+            for header in header_to_var_dic.keys():
+                if "date" in header.lower():
+                    header_to_input_dic[header] = header_to_var_dic[header]
+                else:
+                    header_to_input_dic[header] = var_to_input_dic[header_to_var_dic[header]]
+
+            self.config_info["HEADER_TO_INPUT_DIC"] = header_to_input_dic
+
         # main menu layout
         menu_layout = [
             ["Tools", ["Settings"]],
@@ -270,7 +300,7 @@ class GUI:
         # creating a blank var_to_input dictionary
         self.config_info["VAR_TO_INPUT_DIC"] = {}
 
-        cover_gen = generator.Generator(self.config_info)
+        gen = generator.Generator(self.config_info)
 
         # event loop
         while True:
@@ -285,7 +315,9 @@ class GUI:
                     visible=True)
                 var_to_input_dic(event, values)
             if event == "GENERATE":
-                cover_gen.create()
+                gen.create()
+                header_to_input_dic()
+                gen.write_to_excel_sheet()
 
             print(self.config_info)
 
