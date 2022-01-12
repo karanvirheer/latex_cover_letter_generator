@@ -17,6 +17,7 @@ __pycache__/
 Normal/
 onlineCode.py
 coverLetter.py
-settings.pickle
+settings*
 signature.png
 cover.pdf
+compiled/
