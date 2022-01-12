@@ -3,6 +3,7 @@ import PySimpleGUI as sg
 from PySimpleGUI.PySimpleGUI import main
 import generator
 import datetime
+from os.path import exists
 
 """
 TODO
@@ -88,33 +89,38 @@ class SettingsWindow:
         return var_dic
 
     def create_excel_tracker_input_layout(self):
-        gen = generator.Generator(self.config_info)
-        header_dic = gen.read_excel_sheet()
-        excel_header_layout = []
-        date = datetime.datetime.now()
+        if exists('settings.pickle'):
 
-        excel_header_layout.append([sg.Text(
-            "Please input the variable that corresponds with each header in the excel sheet.", key="TRACKER_BLURB")])
-        excel_header_layout.append([sg.Text(
-            "Example: 'Position Name' would have the variable 'positionName' corresponding to it.", key="TRACKER_EXAMPLE")])
+            gen = generator.Generator(self.config_info)
+            header_dic = gen.read_excel_sheet()
+            excel_header_layout = []
+            date = datetime.datetime.now()
 
-        i = 0
-        for header in header_dic.keys():
-            if "date" in header.lower():
-                excel_header_layout.append(
-                    [sg.Text(f"{header}: ", key=f"TEXT_{i}"),
-                        sg.Input(f"{date.date()}", key=f"HEADER_{i}")])
-            else:
-                excel_header_layout.append(
-                    [sg.Text(f"{header}: ", key=f"TEXT_{i}"),
-                        sg.Input("", key=f"HEADER_{i}")])
-            i += 1
+            excel_header_layout.append([sg.Text(
+                "Please input the variable that corresponds with each header in the excel sheet.", key="TRACKER_BLURB")])
+            excel_header_layout.append([sg.Text(
+                "Example: 'Position Name' would have the variable 'positionName' corresponding to it.", key="TRACKER_EXAMPLE")])
 
-        excel_header_layout.append(
-            [sg.Button("Save All", key="SAVE_HEADER_MAPPING"),
-                sg.Text("Input Saved!", key="SAVE_HEADER_MSG", visible=False)])
+            i = 0
+            for header in header_dic.keys():
+                if "date" in header.lower():
+                    excel_header_layout.append(
+                        [sg.Text(f"{header}: ", key=f"TEXT_{i}"),
+                            sg.Input(f"{date.date()}", key=f"HEADER_{i}")])
+                else:
+                    excel_header_layout.append(
+                        [sg.Text(f"{header}: ", key=f"TEXT_{i}"),
+                            sg.Input("", key=f"HEADER_{i}")])
+                i += 1
 
-        return excel_header_layout
+            excel_header_layout.append(
+                [sg.Button("Save All", key="SAVE_HEADER_MAPPING"),
+                    sg.Text("Input Saved!", key="SAVE_HEADER_MSG", visible=False)])
+
+            return excel_header_layout
+
+        else:
+            return [[]]
 
     def header_to_var_dic(self, values):
         gen = generator.Generator(self.config_info)
@@ -217,7 +223,9 @@ class SettingsWindow:
                                 "Input variable names to be replaced AND type of input box needed")],
                             [sg.Column(variable_layout,
                                        key="VAR_COLUMN")],
-                            [sg.Submit(button_text="Update", key="SUBMIT")]],
+                            [sg.Submit(button_text="Update", key="SUBMIT")],
+
+                            [sg.HorizontalSeparator()]],
 
             scrollable=True, vertical_scroll_only=True, key="SETTINGS_LAYOUT")]
         ]
@@ -260,10 +268,6 @@ class SettingsWindow:
                 self.config_info["YOUR_NAME"] = self.config_info["YOUR_NAME"].replace(
                     " ", "_")
                 self.config_info["CUSTOM_VAR"] = values["CUSTOM_VAR"]
-
-                #self.config_info["FILE_NAME"] = f"{name}_CoverLetter_{var}"
-
-                print(self.config_info["FILE_NAME"])
 
             if event == "TRACKER_CONFIRM" and values["TRACKER_DIR"]:
                 self.config_info["TRACKER_DIR"] = values["TRACKER_DIR"]
@@ -378,7 +382,8 @@ class MainWindow:
         # creating a blank var_to_input dictionary
         self.config_info["VAR_TO_INPUT_DIC"] = {}
 
-        gen = generator.Generator(self.config_info)
+        if exists('settings.pickle'):
+            gen = generator.Generator(self.config_info)
 
         # event loop
         while True:
@@ -395,10 +400,12 @@ class MainWindow:
                 self.var_to_input_dic(values)
             if event == "GENERATE":
                 var = self.config_info["VAR_TO_INPUT_DIC"][self.config_info["CUSTOM_VAR"]]
+
                 self.config_info["FILE_NAME"] = f"{self.config_info['YOUR_NAME']}_CoverLetter_{var}"
-                print(self.config_info["FILE_NAME"])
+
                 gen.create()
                 self.header_to_input_dic()
                 gen.write_to_excel_sheet()
+                gen.save_pdf()
 
         window.close()
