@@ -45,10 +45,15 @@ def save_settings(new_config_info):
 if __name__ == "__main__":
     config_info = load_settings()
 
-    gen = Generator(config_info)
-    gen.read_excel_sheet()
-    # methods
-    gui = gui.GUI(config_info)
-    gui.main()
+    if not(exists('settings.pickle')):
+        gui = gui.GUI(config_info)
+        gui.main()
+    else:
+
+        gen = Generator(config_info)
+        gen.read_excel_sheet()
+        # methods
+        gui = gui.GUI(config_info)
+        gui.main()
 
     save_settings(gui.get_config_info())
