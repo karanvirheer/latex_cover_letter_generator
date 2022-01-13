@@ -223,15 +223,21 @@ class SettingsWindow:
                                 "Input variable names to be replaced AND type of input box needed")],
                             [sg.Column(variable_layout,
                                        key="VAR_COLUMN")],
-                            [sg.Submit(button_text="Update", key="SUBMIT")],
+                            [sg.Column(layout=[[sg.Submit(button_text="Update", key="SUBMIT")],
+                                               [sg.Text("Input Saved!", key="SUBMIT_MSG", visible=False)]], key="UPDATE_COLUMN")],
 
+                            [sg.HorizontalSeparator()],
+                            [sg.HorizontalSeparator()],
+                            [sg.HorizontalSeparator()],
+                            [sg.HorizontalSeparator()],
+                            [sg.HorizontalSeparator()],
                             [sg.HorizontalSeparator()]],
 
-            scrollable=True, vertical_scroll_only=True, key="SETTINGS_LAYOUT")]
+            scrollable=True, vertical_scroll_only=True, key="SETTINGS_LAYOUT", size=(800, 1000))]
         ]
 
         settings_window = sg.Window(
-            "Settings", layout=settings_layout)
+            "Settings", layout=settings_layout, resizable=True, size=(800, 1000))
 
         # event loop
         i = 1
@@ -282,11 +288,13 @@ class SettingsWindow:
                 settings_window.extend_layout(
                     settings_window["VAR_COLUMN"], self.generate_new_var_inputs_layout(i))
                 settings_window["SETTINGS_LAYOUT"].contents_changed()
+                settings_window.Refresh()
                 i += 1
 
             if event == "SUBMIT":
                 self.config_info["VAR_TO_TEXT_TYPE_DIC"] = self.var_to_text_type_dic(
                     values)
+                settings_window["SUBMIT_MSG"].update(visible=True)
 
         settings_window.close()
 
