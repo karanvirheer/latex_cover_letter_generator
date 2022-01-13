@@ -1,4 +1,5 @@
 from tkinter import Scrollbar
+from tkinter.font import BOLD
 import PySimpleGUI as sg
 from PySimpleGUI.PySimpleGUI import main
 import generator
@@ -57,6 +58,10 @@ class GUI:
 class SettingsWindow:
     def __init__(self, config_info: dict) -> None:
         self.config_info = config_info
+        self.main_font = ('Times New Roman', 11, "bold")
+        self.example_font = ('Times New Roman', 10)
+        self.sub_font = ('Times New Roman', 11)
+        sg.theme('DarkBlue14')
 
         # creates a new layout for each variable needed
     def generate_new_var_inputs_layout(self, i):
@@ -97,9 +102,13 @@ class SettingsWindow:
             date = datetime.datetime.now()
 
             excel_header_layout.append([sg.Text(
-                "Please input the variable that corresponds with each header in the excel sheet.", key="TRACKER_BLURB")])
-            excel_header_layout.append([sg.Text(
-                "Example: 'Position Name' would have the variable 'positionName' corresponding to it.", key="TRACKER_EXAMPLE")])
+                "Please input the variable that corresponds with each header in the excel sheet.", key="TRACKER_BLURB", font=self.main_font)])
+
+            excel_header_layout.append(
+                [sg.Text("Example: ", key="TRACKER_MAIN_EXAMPLE", font=self.example_font),
+                 sg.Text("The header: 'Job Applied To' would correspond to the variable 'positionName'.",
+                         key="TRACKER_EXAMPLE", font=self.example_font)]
+            )
 
             i = 0
             for header in header_dic.keys():
@@ -145,62 +154,78 @@ class SettingsWindow:
 
         settings_layout = [[sg.Column(layout=[
 
+                            # ------------ DELIMITER-------------------
+                            [sg.Text(
+                                "Input the delimiter that will be used", font=self.main_font)],
+                            [sg.Text(
+                                'Ex. Here the delimiter is ">":   "Hello, I work for >companyName."', font=self.example_font)],
+                            [sg.Input("", key="DELIMITER")],
+
+                            [sg.HorizontalSeparator()],
+
                             # ---------- TEMPLATE DIRECTORY ----------------
-                           [sg.Text("Select .tex file template")],
-                           [sg.Text("Current Template: " +
-                                    self.config_info.get("TEMPLATE_DIR", ""))],
+                           [sg.Text("Select .tex file template",
+                                    font=self.main_font)],
+                           [sg.Text("Current Template:      " +
+                                    self.config_info.get("TEMPLATE_DIR", ""), font=self.example_font)],
                            [sg.Input("", key="TEMPLATE_DIR"),
-                            sg.FileBrowse()],
+                                sg.FileBrowse()],
                            [sg.Button("Save", key="TEMPLATE_CONFIRM"),
-                            sg.Text("Input Saved!",
-                                    key="TEMPLATE_MSG", visible=False)
+                                sg.Text("Input Saved!",
+                                        key="TEMPLATE_MSG", visible=False)
                             ],
 
                            [sg.HorizontalSeparator()],
 
                             # ---------- SAVE DIRECTORY ----------------
-                           [sg.Text("Select directory to save Cover Letter")],
-                           [sg.Text("Current Directory: " +
-                                    self.config_info.get("SAVE_DIR", ""))],
+                           [sg.Text(
+                               "Select directory to save Cover Letter", font=self.main_font)],
+                           [sg.Text("Current Directory:     " +
+                                    self.config_info.get("SAVE_DIR", ""), font=self.example_font)],
                            [sg.Input("", key="SAVE_DIR"),
-                            sg.FolderBrowse()],
+                                sg.FolderBrowse()],
                            [sg.Button("Save", key="SAVE_CONFIRM"),
-                            sg.Text("Input Saved!",
-                                    key="SAVE_MSG", visible=False)
+                                sg.Text("Input Saved!",
+                                        key="SAVE_MSG", visible=False)
                             ],
 
                            [sg.HorizontalSeparator()],
 
-                           [sg.Text("How should the file be named?")],
-                           [sg.Text("Your Name: ")],
-                           [sg.Input("", key="YOUR_NAME")],
-                           [sg.Button("Save", key="SAVE_NAME")],
-                           [sg.Text("Input Saved!",
-                                    key="SAVE_NAME_MSG", visible=False)],
 
-                           [sg.Radio("Name_CoverLetter",
-                                     key="NAME_COVER", group_id="group_2")],
-                           [sg.Radio(
-                               "Name_CoverLetter_YourChosenVariable", key="NAME_COVER_VAR", group_id="group_2")],
-                           [sg.Button("Save", key="SAVE_FILE_NAME")],
-                           [sg.Text("Input Saved!",
-                                    key="SAVE_FILE_NAME_MSG", visible=False)],
+                           # ----------------- SAVE FILE NAME --------------------
 
-                           [sg.Column(layout=[
-                               [sg.Text("Variable: "),
-                                      sg.Input("", key="CUSTOM_VAR"),
-                                      sg.Button("Save",
-                                                key="SAVE_CUSTOM_VAR"),
-                                      sg.Text("Input Saved!", key="SAVE_CUSTOM_VAR_MSG", visible=False)]],
+                            [sg.Text("How should the file be named?",
+                                     font=self.main_font)],
+                            [sg.Text("Your Name: ", font=self.example_font)],
+                            [sg.Input("", key="YOUR_NAME")],
+                            [sg.Button("Save", key="SAVE_NAME")],
+                            [sg.Text("Input Saved!",
+                                     key="SAVE_NAME_MSG", visible=False)],
 
-                                      key="SHOW_CUSTOM", visible=False)],
+                            [sg.Radio("Name_CoverLetter",
+                                      key="NAME_COVER", group_id="group_2")],
+                            [sg.Radio(
+                                "Name_CoverLetter_YourChosenVariable", key="NAME_COVER_VAR", group_id="group_2")],
+                            [sg.Button("Save", key="SAVE_FILE_NAME")],
+                            [sg.Text("Input Saved!",
+                                     key="SAVE_FILE_NAME_MSG", visible=False)],
+
+                            [sg.Column(layout=[
+                                [sg.Text("Variable: "),
+                                 sg.Input("", key="CUSTOM_VAR"),
+                                 sg.Button("Save",
+                                           key="SAVE_CUSTOM_VAR"),
+                                 sg.Text("Input Saved!", key="SAVE_CUSTOM_VAR_MSG", visible=False)]],
+
+                                key="SHOW_CUSTOM", visible=False)],
 
                             [sg.HorizontalSeparator()],
 
                             # ---------- TRACKER DIRECTORY ----------------
-                            [sg.Text("Select directory of Excel Tracking Sheet")],
-                            [sg.Text("Current Directory: " +
-                                     self.config_info.get("TRACKER_DIR", ""))],
+                            [sg.Text(
+                                "Select directory of Excel Tracking Sheet", font=self.main_font)],
+                            [sg.Text("Current Directory:        " +
+                                     self.config_info.get("TRACKER_DIR", ""), font=self.example_font)],
                             [sg.Input("", key="TRACKER_DIR"),
                                sg.FileBrowse()],
                             [sg.Button("Save", key="TRACKER_CONFIRM"),
@@ -220,7 +245,7 @@ class SettingsWindow:
 
                             # ---------- MAIN WINDOW VARIABLES ----------------
                             [sg.Text(
-                                "Input variable names to be replaced AND type of input box needed")],
+                                "Input variable names to be replaced AND type of input box needed", font=self.main_font)],
                             [sg.Column(variable_layout,
                                        key="VAR_COLUMN")],
                             [sg.Column(layout=[[sg.Submit(button_text="Update", key="SUBMIT")],
